@@ -56,3 +56,4 @@ public interface SlackService {
     boolean testConnection();
 }
 
+

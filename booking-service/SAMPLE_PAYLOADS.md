@@ -128,3 +128,4 @@
 - `PUT /api/v2/booking/bulk/payment-status` - Bulk payment status update
 - `PUT /api/v2/booking/bulk/cancel` - Bulk cancellation
 
+

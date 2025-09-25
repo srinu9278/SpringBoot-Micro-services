@@ -174,3 +174,4 @@ The Booking Service integrates with:
 - **Payment Service**: For payment processing (future)
 - **Notification Service**: For booking notifications (future)
 
+

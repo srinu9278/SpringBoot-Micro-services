@@ -44,3 +44,4 @@ MONGODB_URI=mongodb://localhost:27017/notification_db
 - Never commit `.env` files to Git
 - All secrets are stored in environment variables
 - The `.env` file is gitignored for security
+
