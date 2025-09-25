@@ -1,0 +1,88 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        # User Service Routes
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v2/user/**
+          filters:
+            - StripPrefix=0
+        # Hotel Service Routes
+        - id: hotel-service
+          uri: lb://hotel-service
+          predicates:
+            - Path=/api/v2/hotel/**
+          filters:
+            - StripPrefix=0
+        # Room Service Routes (for future)
+        - id: room-service
+          uri: lb://room-service
+          predicates:
+            - Path=/api/v2/room/**
+          filters:
+            - StripPrefix=0
+        # Booking Service Routes (for future)
+        - id: booking-service
+          uri: lb://booking-service
+          predicates:
+            - Path=/api/v2/booking/**
+          filters:
+            - StripPrefix=0
+        # Payment Service Routes (for future)
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/v2/payment/**
+          filters:
+            - StripPrefix=0
+        # Notification Service Routes (for future)
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/v2/notification/**
+          filters:
+            - StripPrefix=0
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: false
+    hostname: ${spring.cloud.client.hostname:${spring.application.name}}
+    instance-id: ${spring.cloud.client.hostname:${spring.application.name}}:${spring.application.name}:${server.port}
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway,configprops
+  endpoint:
+    health:
+      show-details: always
+
+# Logging configuration
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
