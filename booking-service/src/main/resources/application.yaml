@@ -41,18 +41,6 @@ feign:
         logger-level: full
   hystrix:
     enabled: true
-
-# Hystrix Configuration
-hystrix:
-  command:
-    default:
-      execution:
-        timeout:
-          enabled: true
-        isolation:
-          thread:
-            timeout-in-milliseconds: 10000
-
 logging:
   level:
     com.hotel.booking_service: DEBUG

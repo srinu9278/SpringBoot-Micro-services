@@ -30,11 +30,43 @@ public class SlackServiceImpl implements SlackService {
     @Value("${slack.default.channel}")
     private String defaultChannel;
     
+    @Value("${slack.channels.bookings}")
+    private String bookingsChannel;
+    
+    @Value("${slack.channels.payments}")
+    private String paymentsChannel;
+    
+    @Value("${slack.channels.rooms}")
+    private String roomsChannel;
+    
+    @Value("${slack.channels.guests}")
+    private String guestsChannel;
+    
+    @Value("${slack.channels.maintenance}")
+    private String maintenanceChannel;
+    
+    @Value("${slack.channels.alerts}")
+    private String alertsChannel;
+    
+    @Value("${slack.channels.general}")
+    private String generalChannel;
+    
     private final Slack slack = Slack.getInstance();
     
     @Override
     public SlackResponseDto sendMessage(String channel, String message) {
         log.info("Sending Slack message to channel: {}", channel);
+        
+        // Check if Slack bot token is configured
+        if (slackBotToken == null || slackBotToken.trim().isEmpty()) {
+            log.warn("Slack bot token is not configured. Skipping Slack notification.");
+            return SlackResponseDto.builder()
+                    .success(false)
+                    .error("Slack bot token not configured")
+                    .channel(channel)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
         
         try {
             MethodsClient methods = slack.methods(slackBotToken);
@@ -79,6 +111,17 @@ public class SlackServiceImpl implements SlackService {
     @Override
     public SlackResponseDto sendRichMessage(String channel, SlackMessageDto slackMessage) {
         log.info("Sending rich Slack message to channel: {}", channel);
+        
+        // Check if Slack bot token is configured
+        if (slackBotToken == null || slackBotToken.trim().isEmpty()) {
+            log.warn("Slack bot token is not configured. Skipping rich Slack notification.");
+            return SlackResponseDto.builder()
+                    .success(false)
+                    .error("Slack bot token not configured")
+                    .channel(channel)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
         
         try {
             MethodsClient methods = slack.methods(slackBotToken);
@@ -217,6 +260,12 @@ public class SlackServiceImpl implements SlackService {
     public boolean testConnection() {
         log.info("Testing Slack connection");
         
+        // Check if Slack bot token is configured
+        if (slackBotToken == null || slackBotToken.trim().isEmpty()) {
+            log.warn("Slack bot token is not configured. Cannot test connection.");
+            return false;
+        }
+        
         try {
             MethodsClient methods = slack.methods(slackBotToken);
             // Simple API call to test connection
@@ -276,6 +325,39 @@ public class SlackServiceImpl implements SlackService {
             case "LOW" -> ":green_circle:";
             default -> ":white_circle:";
         };
+    }
+    
+    // Channel getter methods
+    public String getDefaultChannel() {
+        return defaultChannel;
+    }
+    
+    public String getBookingsChannel() {
+        return bookingsChannel;
+    }
+    
+    public String getPaymentsChannel() {
+        return paymentsChannel;
+    }
+    
+    public String getRoomsChannel() {
+        return roomsChannel;
+    }
+    
+    public String getGuestsChannel() {
+        return guestsChannel;
+    }
+    
+    public String getMaintenanceChannel() {
+        return maintenanceChannel;
+    }
+    
+    public String getAlertsChannel() {
+        return alertsChannel;
+    }
+    
+    public String getGeneralChannel() {
+        return generalChannel;
     }
 }
 

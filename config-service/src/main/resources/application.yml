@@ -1,3 +1,6 @@
+server:
+  port: 8888
+
 spring:
   application:
     name: config-service
@@ -5,25 +8,15 @@ spring:
     config:
       server:
         git:
-          uri: file://${user.home}/hotel-config-repo
+          uri: file://${user.home}/config-repo
           default-label: main
         native:
           search-locations: classpath:/config
-      profiles:
-        active: native
-
-server:
-  port: 8888
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
+  profiles:
+    active: native
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,refresh
+        include: health,info,refresh

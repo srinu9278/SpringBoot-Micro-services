@@ -65,9 +65,8 @@ public class UserServiceImpl implements UserService {
                 userData.put("userName", savedUser.getUserName());
                 userData.put("role", savedUser.getRole());
                 userData.put("active", savedUser.isActive());
-                userData.put("createdAt", savedUser.getCreatedAt());
                 
-                notificationClient.handleUserEvent("USER_REGISTERED", userData);
+                notificationClient.handleGuestEvent("USER_REGISTERED", userData);
                 logger.info("User registration notification sent successfully");
             } catch (Exception e) {
                 logger.error("Failed to send user registration notification: {}", e.getMessage());

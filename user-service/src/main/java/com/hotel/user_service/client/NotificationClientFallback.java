@@ -10,7 +10,7 @@ import java.util.Map;
 public class NotificationClientFallback implements NotificationClient {
     
     @Override
-    public void handleUserEvent(String eventType, Map<String, Object> userData) {
-        log.warn("Notification service is unavailable. User event '{}' not sent to Slack. Data: {}", eventType, userData);
+    public void handleGuestEvent(String eventType, Map<String, Object> guestData) {
+        log.warn("Notification service is unavailable. Guest event '{}' not sent to Slack. Data: {}", eventType, guestData);
     }
 }

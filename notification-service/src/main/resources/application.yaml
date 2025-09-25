@@ -6,25 +6,10 @@ spring:
     name: notification-service
   cloud:
     config:
-      enabled: false
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017
-      database: hotel_notifications
-      auto-index-creation: true
-      write-concern: acknowledged
-      read-preference: primary
-      max-connections-per-host: 100
-      min-connections-per-host: 5
-      max-connection-idle-time: 30000
-      max-connection-life-time: 600000
-      server-selection-timeout: 30000
-      connect-timeout: 10000
-      socket-timeout: 0
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
-    time-zone: UTC
+      enabled: true
+      fail-fast: true
+  config:
+    import: "configserver:http://localhost:8888"
 
 eureka:
   client:
@@ -52,20 +37,6 @@ logging:
     org.springframework.web: DEBUG
     org.springframework.cloud: DEBUG
 
-# Slack Configuration - Use environment variables only
-slack:
-  bot:
-    token: ${SLACK_BOT_TOKEN}
-  default:
-    channel: ${SLACK_DEFAULT_CHANNEL:#hotel-general}
-  channels:
-    bookings: ${SLACK_BOOKINGS_CHANNEL:#hotel-bookings}
-    payments: ${SLACK_PAYMENTS_CHANNEL:#hotel-payments}
-    rooms: ${SLACK_ROOMS_CHANNEL:#hotel-rooms}
-    guests: ${SLACK_GUESTS_CHANNEL:#hotel-guests}
-    maintenance: ${SLACK_MAINTENANCE_CHANNEL:#hotel-maintenance}
-    alerts: ${SLACK_ALERTS_CHANNEL:#hotel-alerts}
-    general: ${SLACK_GENERAL_CHANNEL:#hotel-general}
 
 # Notification Service Configuration
 notification:

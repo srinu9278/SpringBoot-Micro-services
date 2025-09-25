@@ -10,6 +10,6 @@ import java.util.Map;
 @FeignClient(name = "notification-service", fallback = NotificationClientFallback.class)
 public interface NotificationClient {
     
-    @PostMapping("/api/v2/notification/event/user")
-    void handleUserEvent(@RequestParam String eventType, @RequestBody Map<String, Object> userData);
+    @PostMapping("/api/v2/notification/event/guest")
+    void handleGuestEvent(@RequestParam String eventType, @RequestBody Map<String, Object> guestData);
 }
