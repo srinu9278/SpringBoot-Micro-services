@@ -7,8 +7,9 @@ spring:
     config:
       enabled: true
       fail-fast: true
-  config:
-    import: "configserver:http://localhost:8888"
+  # config.import is set in application-docker.yml for Docker environment
+  # For local development, uncomment: config:
+  #   import: "configserver:http://localhost:8888"
 
 server:
   port: 9003

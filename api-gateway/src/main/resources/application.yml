@@ -1,14 +1,16 @@
 spring:
   application:
     name: api-gateway
-  profiles:
-    active: local
+  # profiles.active is set via SPRING_PROFILES_ACTIVE environment variable in Docker
+  # For local development, set: profiles:
+  #   active: local
   cloud:
     config:
       enabled: true
       fail-fast: true
-  config:
-    import: "configserver:http://localhost:8888"
+  # config.import is set in application-docker.yml for Docker environment
+  # For local development, use: config:
+  #   import: "configserver:http://localhost:8888"
     gateway:
       routes:
         # User Service Routes
