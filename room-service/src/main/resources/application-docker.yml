@@ -1,0 +1,16 @@
+spring:
+  cloud:
+    config:
+      enabled: true
+      fail-fast: true
+  config:
+    import: "configserver:http://config-service:8888"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    hostname: room-service
+

@@ -1,0 +1,368 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: hotel-postgres
+    environment:
+      POSTGRES_DB: hotels
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "Srinu@9278"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hotel-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: hotel-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: hotel_notifications
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - hotel-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: hotel-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - hotel-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Service Discovery (Eureka Server)
+  service-discovery:
+    build:
+      context: ./service-discovery
+      dockerfile: Dockerfile
+    container_name: hotel-service-discovery
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_INSTANCE_HOSTNAME=service-discovery
+    networks:
+      - hotel-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Config Service
+  config-service:
+    build:
+      context: ./config-service
+      dockerfile: Dockerfile
+    container_name: hotel-config-service
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=native,docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8888/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: hotel-user-service
+    ports:
+      - "9000:9000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/hotels
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Srinu@9278
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://config-service:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # Hotel Service
+  hotel-service:
+    build:
+      context: ./hotel-service
+      dockerfile: Dockerfile
+    container_name: hotel-hotel-service
+    ports:
+      - "9002:9002"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/hotels
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Srinu@9278
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://config-service:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9002/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # Room Service
+  room-service:
+    build:
+      context: ./room-service
+      dockerfile: Dockerfile
+    container_name: hotel-room-service
+    ports:
+      - "9003:9003"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/hotels
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Srinu@9278
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://config-service:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9003/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # Booking Service
+  booking-service:
+    build:
+      context: ./booking-service
+      dockerfile: Dockerfile
+    container_name: hotel-booking-service
+    ports:
+      - "9004:9004"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/hotels
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Srinu@9278
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://config-service:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9004/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: hotel-payment-service
+    ports:
+      - "9005:9005"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/hotels
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Srinu@9278
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://config-service:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9005/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: hotel-notification-service
+    ports:
+      - "9006:9006"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/hotel_notifications
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CLOUD_CONFIG_ENABLED=true
+      - SPRING_CONFIG_IMPORT=configserver:http://config-service:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9006/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # Monitoring Service
+  monitoring-service:
+    build:
+      context: ./monitoring-service
+      dockerfile: Dockerfile
+    container_name: hotel-monitoring-service
+    ports:
+      - "9411:9411"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://config-service:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9411/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: hotel-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://config-service:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - hotel-network
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      hotel-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  rabbitmq_data:
+
+networks:
+  hotel-network:
+    driver: bridge
+
